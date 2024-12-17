@@ -45,7 +45,7 @@ Export/Import: Use buttons to save or load your data in JSON format.
 Track Streaks: Check your "Longest Streak" and reset streaks with a single click.
 
 **you can use it online too but make sure that chrome dont  delete the data or just export it useing export button**
- `https://amram841.github.io/study-heatmap/`
+( [Visit my website](https://amram841.github.io/study-heatmap/))
 
 
 
