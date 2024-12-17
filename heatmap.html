@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5-Year Heatmap Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        h1 {
+            color: #58a6ff;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .menu-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background-color: #161b22;
+        }
+        .menu-bar button, .menu-bar select {
+            background-color: #238636;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .menu-bar button:hover { background-color: #2ea043; }
+
+        .month-container {
+            display: inline-block;
+            margin: 10px;
+            vertical-align: top;
+        }
+        .month-title {
+            text-align: center;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .week {
+            display: flex;
+        }
+        .day-cell {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin: 2px;
+            position: relative;
+            background-color: #161b22;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .day-cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 5px #58a6ff;
+        }
+        .day-cell[data-value="1"] { background-color: #003f5c; }
+        .day-cell[data-value="2"] { background-color: #2f4b7c; }
+        .day-cell[data-value="3"] { background-color: #665191; }
+        .day-cell[data-value="4"] { background-color: #a05195; }
+        .day-cell[data-value="5"] { background-color: #d45087; }
+        .tooltip {
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            white-space: nowrap;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .day-cell:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip-options {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .tooltip-options button {
+            background-color: #2ea043;
+            border: none;
+            color: white;
+            font-size: 12px;
+            padding: 3px 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        .tooltip-options button:hover { background-color: #238636; }
+        .streak {
+            color: #58a6ff;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+        body.light-mode { background-color: #fff; color: #000; }
+        body.light-mode .day-cell { border: 1px solid #ccc; }
+        .reset-button {
+            background-color: #d45087;
+            color: #fff;
+            border: none;
+            padding: 5px 8px;
+            margin-left: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+        .reset-button:hover { background-color: #a05195; }
+    </style>
+</head>
+<body>
+    <div class="menu-bar">
+        <button onclick="toggleTheme()">Toggle Light/Dark Mode</button>
+        <button onclick="exportData()">Export Data</button>
+        <button onclick="document.getElementById('fileInput').click()">Import Data</button>
+        <input type="file" id="fileInput" style="display: none" accept=".json" onchange="importData(event)">
+    </div>
+
+    <h1>5-Year Study Heatmap</h1>
+    <div id="heatmap"></div>
+    <div class="streak" id="streakDisplay">
+        Longest Streak: 0 days
+        <button class="reset-button" onclick="resetStreak()">Reset Streak</button>
+    </div>
+    
+    <script>
+        const startYear = 2024, years = 5;
+        const heatmapData = JSON.parse(localStorage.getItem('heatmapData')) || {};
+        const notes = JSON.parse(localStorage.getItem('notes')) || {};
+
+        function createHeatmap() {
+            const heatmap = document.getElementById('heatmap');
+            heatmap.innerHTML = '';
+            for (let year = 0; year < years; year++) {
+                const currentYear = startYear + year;
+                for (let month = 0; month < 12; month++) {
+                    const monthContainer = document.createElement('div');
+                    monthContainer.className = 'month-container';
+                    monthContainer.innerHTML = `<div class='month-title'>${new Date(currentYear, month).toLocaleString('default', { month: 'long' })}</div>`;
+                    const weeks = generateWeeks(currentYear, month);
+                    weeks.forEach(week => {
+                        const weekDiv = document.createElement('div');
+                        weekDiv.className = 'week';
+                        week.forEach(day => {
+                            const dateKey = day ? `${currentYear}-${month + 1}-${day}` : '';
+                            const cell = document.createElement('div');
+                            cell.className = 'day-cell';
+                            cell.dataset.value = heatmapData[dateKey] || 0;
+                            if (day) {
+                                const tooltip = document.createElement('div');
+                                tooltip.className = 'tooltip';
+                                tooltip.innerHTML = `
+                                    <span>${notes[dateKey] || 'No Notes'}</span>
+                                    <div class='tooltip-options'>
+                                        <button onclick='resetCell(event, "${dateKey}")'>Reset</button>
+                                        <button onclick='editNote(event, "${dateKey}")'>Add Note</button>
+                                    </div>`;
+                                cell.appendChild(tooltip);
+                                cell.onclick = () => updateCell(cell, dateKey);
+                            }
+                            weekDiv.appendChild(cell);
+                        });
+                        monthContainer.appendChild(weekDiv);
+                    });
+                    heatmap.appendChild(monthContainer);
+                }
+            }
+            calculateStreak();
+        }
+
+        function generateWeeks(year, month) {
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const weeks = [];
+            let week = Array(firstDay).fill(null);
+            for (let day = 1; day <= daysInMonth; day++) {
+                week.push(day);
+                if (week.length === 7) {
+                    weeks.push(week);
+                    week = [];
+                }
+            }
+            if (week.length) weeks.push(week.concat(Array(7 - week.length).fill(null)));
+            return weeks;
+        }
+
+        function updateCell(cell, dateKey) {
+            let value = (parseInt(cell.dataset.value) + 1) % 6;
+            cell.dataset.value = value;
+            heatmapData[dateKey] = value;
+            localStorage.setItem('heatmapData', JSON.stringify(heatmapData));
+            calculateStreak();
+        }
+
+        function resetCell(event, dateKey) {
+            event.stopPropagation();
+            delete heatmapData[dateKey];
+            localStorage.setItem('heatmapData', JSON.stringify(heatmapData));
+            createHeatmap();
+        }
+
+        function editNote(event, dateKey) {
+            event.stopPropagation();
+            const note = prompt('Enter note:', notes[dateKey] || '');
+            if (note !== null) {
+                notes[dateKey] = note;
+                localStorage.setItem('notes', JSON.stringify(notes));
+                createHeatmap();
+            }
+        }
+
+        function calculateStreak() {
+            let currentStreak = 0, longestStreak = 0;
+            Object.values(heatmapData).forEach(val => {
+                if (parseInt(val) > 0) currentStreak++;
+                else {
+                    longestStreak = Math.max(longestStreak, currentStreak);
+                    currentStreak = 0;
+                }
+            });
+            longestStreak = Math.max(longestStreak, currentStreak);
+            document.getElementById('streakDisplay').innerText = `Longest Streak: ${longestStreak} days`;
+        }
+
+        function resetStreak() {
+            localStorage.removeItem('heatmapData');
+            localStorage.removeItem('notes');
+            document.getElementById('streakDisplay').innerText = `Longest Streak: 0 days`;
+            createHeatmap();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        function exportData() {
+            const blob = new Blob([JSON.stringify(heatmapData)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'heatmap-data.json';
+            link.click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    Object.assign(heatmapData, JSON.parse(e.target.result));
+                    localStorage.setItem('heatmapData', JSON.stringify(heatmapData));
+                    createHeatmap();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        createHeatmap();
+    </script>
+</body>
+</html>
