@@ -1,10 +1,12 @@
-#📊 **5-Year Heatmap Tracker**
+
+# 📊5-Year Heatmap Tracker
+
+
 
 A dynamic and interactive heatmap designed to visually track activity (such as study sessions, workouts, or habits) over a 5-year span. 
 The project provides an intuitive calendar layout with customizable features to suit personal or professional tracking needs.
 
-##🌟** Features:**
-
+## 🌟 Features:
 Heatmap Visualization: Track activity intensity for each day over 5 years with color-coded blocks.
 
 Longest Streak Calculation: Automatically calculates and displays the longest streak of active days.
@@ -22,7 +24,7 @@ Reset Options: Reset individual cells or clear all progress, including streaks.
 
 
 
-##🛠️ **Technologies Used:**
+## 🛠️ **Technologies Used:**
 
 HTML5 & CSS3: Responsive and modern user interface.
 JavaScript: Dynamic rendering and local storage management.
@@ -30,7 +32,7 @@ Chart.js (optional for future graph enhancements).
 
 
 
-##🚀 How to Use:
+## 🚀 How to Use:
 
 Mark Days: Click on a day to cycle through activity levels (5 levels available).
 
@@ -47,7 +49,7 @@ Track Streaks: Check your "Longest Streak" and reset streaks with a single click
 
 
 
-##📥 **Installation:**
+## 📥 **Installation:**
 Simply clone the repository and open the index.html file in any modern browser:
 
 
@@ -61,7 +63,7 @@ Simply clone the repository and open the index.html file in any modern browser:
 `open index.html`
 
 
-📸 Preview:
+### 📸 Preview:
 
 
 ![Untitled](https://github.com/user-attachments/assets/538b2e6f-0b58-43ab-99b9-27138472d64d)
