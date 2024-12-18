@@ -25,6 +25,7 @@
             justify-content: space-between;
             padding: 10px 20px;
             background-color: #161b22;
+            
         }
         .menu-bar button, .menu-bar select {
             background-color: #238636;
@@ -36,12 +37,20 @@
             transition: background-color 0.3s;
         }
         .menu-bar button:hover { background-color: #2ea043; }
+      
 
         .month-container {
-            display: inline-block;
-            margin: 10px;
-            vertical-align: top;
-        }
+    display: inline-block;
+    margin: 10px;
+    vertical-align: top;
+    position: relative;  /* To control the stacking of elements */
+    background-color: rgba(0, 0, 0, 0.5);  /* Semi-transparent black */
+    padding: 10px;  /* Optional, to give some padding around the months */
+    border-radius: 10px;  /* Optional, for rounded corners */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0);  /* Optional, to create a soft shadow around each month */
+    align-self: center
+}
+
         .month-title {
             text-align: center;
             margin-bottom: 5px;
@@ -121,67 +130,112 @@
             transition: background-color 0.3s;
         }
         .reset-button:hover { background-color: #a05195; }
+        .carousel-background {
+    position: fixed;  /* Fixed positioning to stay in place while scrolling */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('Piano.jpg'), url('kafka.jpg'), url('Hands.jpg'); /* Replace with your image URLs */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: backgroundAnimation 30s infinite;
+    z-index: -1;  /* Ensure the background stays behind the content */
+    opacity: 1;  /* Set to 1 to ensure the background is fully visible */
+}
+.containerofthemall{
+    display: flex !important;
+    align-items: center !important;
+
+}
+
+@keyframes backgroundAnimation {
+    0% {
+        background-image: url('Piano.jpg');
+    }
+    33% {
+        background-image: url('kafka.jpg');
+    }
+    66% {
+        background-image: url('Hand.jpg');
+    }
+    100% {
+        background-image: url('Dostoyevsky.jpg');
+    }
+}
     </style>
 </head>
 <body>
+    <div class="carousel-background"></div> 
+    
     <div class="menu-bar">
         <button onclick="toggleTheme()">Toggle Light/Dark Mode</button>
         <button onclick="exportData()">Export Data</button>
         <button onclick="document.getElementById('fileInput').click()">Import Data</button>
         <input type="file" id="fileInput" style="display: none" accept=".json" onchange="importData(event)">
     </div>
-
+<div class="containerofthemall">
     <h1>5-Year Study Heatmap</h1>
     <div id="heatmap"></div>
     <div class="streak" id="streakDisplay">
         Longest Streak: 0 days
         <button class="reset-button" onclick="resetStreak()">Reset Streak</button>
     </div>
-    
+</div>
     <script>
         const startYear = 2024, years = 5;
         const heatmapData = JSON.parse(localStorage.getItem('heatmapData')) || {};
         const notes = JSON.parse(localStorage.getItem('notes')) || {};
 
         function createHeatmap() {
-            const heatmap = document.getElementById('heatmap');
-            heatmap.innerHTML = '';
-            for (let year = 0; year < years; year++) {
-                const currentYear = startYear + year;
-                for (let month = 0; month < 12; month++) {
-                    const monthContainer = document.createElement('div');
-                    monthContainer.className = 'month-container';
-                    monthContainer.innerHTML = `<div class='month-title'>${new Date(currentYear, month).toLocaleString('default', { month: 'long' })}</div>`;
-                    const weeks = generateWeeks(currentYear, month);
-                    weeks.forEach(week => {
-                        const weekDiv = document.createElement('div');
-                        weekDiv.className = 'week';
-                        week.forEach(day => {
-                            const dateKey = day ? `${currentYear}-${month + 1}-${day}` : '';
-                            const cell = document.createElement('div');
-                            cell.className = 'day-cell';
-                            cell.dataset.value = heatmapData[dateKey] || 0;
-                            if (day) {
-                                const tooltip = document.createElement('div');
-                                tooltip.className = 'tooltip';
-                                tooltip.innerHTML = `
-                                    <span>${notes[dateKey] || 'No Notes'}</span>
-                                    <div class='tooltip-options'>
-                                        <button onclick='resetCell(event, "${dateKey}")'>Reset</button>
-                                        <button onclick='editNote(event, "${dateKey}")'>Add Note</button>
-                                    </div>`;
-                                cell.appendChild(tooltip);
-                                cell.onclick = () => updateCell(cell, dateKey);
-                            }
-                            weekDiv.appendChild(cell);
-                        });
-                        monthContainer.appendChild(weekDiv);
-                    });
-                    heatmap.appendChild(monthContainer);
-                }
-            }
-            calculateStreak();
+    const heatmap = document.getElementById('heatmap');
+    heatmap.innerHTML = '';
+    
+    for (let year = 0; year < years; year++) {
+        const currentYear = startYear + year;
+        
+        // Add a container for the year
+        const yearContainer = document.createElement('div');
+        yearContainer.className = 'year-container';
+        yearContainer.innerHTML = `<h2 style="text-align: center; color: #58a6ff;">${currentYear}</h2>`;
+        
+        for (let month = 0; month < 12; month++) {
+            const monthContainer = document.createElement('div');
+            monthContainer.className = 'month-container';
+            monthContainer.innerHTML = `<div class='month-title'>${new Date(currentYear, month).toLocaleString('default', { month: 'long' })}</div>`;
+            
+            const weeks = generateWeeks(currentYear, month);
+            weeks.forEach(week => {
+                const weekDiv = document.createElement('div');
+                weekDiv.className = 'week';
+                week.forEach(day => {
+                    const dateKey = day ? `${currentYear}-${month + 1}-${day}` : '';
+                    const cell = document.createElement('div');
+                    cell.className = 'day-cell';
+                    cell.dataset.value = heatmapData[dateKey] || 0;
+                    if (day) {
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'tooltip';
+                        tooltip.innerHTML = `
+                            <span>${notes[dateKey] || 'No Notes'}</span>
+                            <div class='tooltip-options'>
+                                <button onclick='resetCell(event, "${dateKey}")'>Reset</button>
+                                <button onclick='editNote(event, "${dateKey}")'>Add Note</button>
+                            </div>`;
+                        cell.appendChild(tooltip);
+                        cell.onclick = () => updateCell(cell, dateKey);
+                    }
+                    weekDiv.appendChild(cell);
+                });
+                monthContainer.appendChild(weekDiv);
+            });
+            yearContainer.appendChild(monthContainer);
         }
+        heatmap.appendChild(yearContainer);
+    }
+    calculateStreak();
+}
 
         function generateWeeks(year, month) {
             const firstDay = new Date(year, month, 1).getDay();
